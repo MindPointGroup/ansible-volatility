@@ -1,0 +1,129 @@
+---
+
+- name: "USERS | Add DFIR accounts"
+  user:
+    name: "{{ item.username }}"
+    groups: wheel
+    append: yes
+    createhome: yes
+    shell: "{{ item.shell }}"
+    state: "{{ item.state }}"
+  with_items: "{{ users }}"
+  tags:
+    - users
+
+- name: "USERS | Add public key for DFIR users to authorized_keys file"
+  authorized_key:
+    user: "{{ item.username }}"
+    manage_dir: yes
+    key: "{{ lookup('file', 'files/users/{{ item.username }}.pub') }}"
+  with_items: "{{ users }}"
+  tags:
+    - users
+
+- name: "PACKAGES | Add some packages we will need"
+  yum:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - python-devel
+    - openssl-devel
+    - gcc
+
+- name: "INSTALL APPS | Clone git repos for all of the tools we want"
+  git:
+    repo: "{{ item.repo }}"
+    accept_hostkey: yes
+    dest: "{{ item.dest }}"
+  with_items:
+    - { repo: "https://github.com/volatilityfoundation/volatility.git", dest: "/tmp/volatility" }
+    - { repo: "https://github.com/google/rekall.git", dest: "/tmp/rekall" }
+    - { repo: "https://github.com/mnemonic-no/dnscache.git", dest: "/tmp/dnscache" }
+    - { repo: "https://github.com/monnappa22/HollowFind.git", dest: "/tmp/hollowfind" }
+
+- name: "INSTALL APPS | Install volatility"
+  command: python setup.py install --prefix=/ --optimize 1
+  args:
+    chdir: /tmp/volatility
+    creates: /bin/vol.py
+
+- name: "INSTALL APPS | Install python libraries needed by volatility"
+  pip:
+    name: "{{ item.name }}"
+    state: "{{ item.state }}"
+  with_items:
+    - {name: wheel, state: present}
+    - {name: openpyxl, state: absent}
+    - {name: pefile, state: present}
+    - {name: future, state: present}
+    - {name: pdbparse, state: present}
+    - {name: pycrypto, state: present}
+    - {name: distorm3, state: present}
+    - {name: setuptools, state: latest}
+#    - {name: rekall, state: present}
+#    - {name: rekall-agent, state: present}
+  ignore_errors: true
+  tags:
+    - pylibs
+
+- name: "INSTALL APPS | Install python libraries needed by volatility"
+  pip:
+    name: "{{ item.name }}"
+    state: "{{ item.state }}"
+    version: "{{ item.version }}"
+  with_items:
+    - { name: construct, state: present, version: 2.5.5-reupload }
+    - { name: openpyxl, state: present, version: 2.1.2 }
+  tags:
+    - pylibs
+
+# - name: "INSTALL APPS | Install rekall"
+#   pip:
+#     name: "{{ item.name }}"
+#     state: "{{ item.state }}"
+#     chdir: /tmp/rekall
+#     virtualenv: /opt/rekall
+#     editable: true
+#   with_items:
+#     - {name: rekall-core, state: present}
+#     - {name: rekall-agent, state: present}
+#     - {name: rekall, state: present}
+
+# - name: "CONFIG | Create directory for volatility to use 3rd party plugins"
+#   file:
+#     dest: /usr/share/volatility/plugins
+#     owner: root
+#     group: root
+#     mode: 0755
+#     state: directory
+
+# - name: "CONFIG | Create alias for volatility to use 3rd party plugins"
+#   lineinfile:
+#     dest: /etc/bashrc
+#     line: "alias vol.py='vol.py --plugins=/usr/share/volatility/plugins'"
+#     state: present
+#     insertafter: '# Environment stuff goes in /etc/profile'
+#   tags:
+#     - bashrc
+#     - alias
+
+# - name: "CONFIG | Load 3rd party plugins"
+#   git:
+#     repo: "{{ item.repo }}"
+#     accept_hostkey: yes
+#     dest: "{{ item.dest }}"
+#   with_items:
+#     - { repo: "https://github.com/mnemonic-no/dnscache.git", dest: "/usr/share/volatility/plugins/dnscache" }
+- name: "CONFIG | Load 3rd party plugins"
+  copy:
+    remote_src: true
+    src: "{{ item.src }}"
+    dest: /usr/lib/python2.7/site-packages/volatility-2.6-py2.7.egg/volatility/plugins/{{ item.dest }}
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+    - { src: /tmp/dnscache/dnscache.py, dest: dnscache.py }
+    - { src: /tmp/dnscache/tools/pdbinfo.py, dest: pdbinfo.py }
+    - { src: /tmp/hollowfind/hollowfind.py, dest: hollowfind.py }
