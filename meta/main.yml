@@ -1,0 +1,45 @@
+galaxy_info:
+  author: Matt Shepherd
+  description: your description
+  company: MindPoint Group
+  license: MIT
+
+  # If the issue tracker for your role is not on github, uncomment the
+  # next line and provide a value
+  # issue_tracker_url: http://example.com/issue/tracker
+
+  min_ansible_version: 2.1
+
+  # Below are all platforms currently available. Just uncomment
+  # the ones that apply to your role. If you don't see your
+  # platform on this list, let us know and we'll get it added!
+  #
+  platforms:
+  #- name: MacOSX
+  #  versions:
+  #  - all
+  #  - 10.10
+  #  - 10.11
+  #  - 10.12
+  #  - 10.7
+  #  - 10.8
+  #  - 10.9
+  #- name: Ubuntu
+  #  versions:
+  #  - all
+  #  - lucid
+  #  - maverick
+  - name: EL
+    versions:
+  #  - 6
+    - 7
+
+  galaxy_tags:
+    - redhat
+    - centos
+    - security
+
+dependencies: []
+  # List your role dependencies here, one per line.
+  # Be sure to remove the '[]' above if you add dependencies
+  # to this list.
