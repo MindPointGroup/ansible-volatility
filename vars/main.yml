@@ -1,2 +1,11 @@
 ---
 # vars file for ansible-volatility
+
+# Add any of the users who need to perform forensics work with this system. Specify state and preferred shell for each user account.
+users:
+  - username: investigator1
+    state: present
+    shell: /bin/bash
+  - username: investigator2
+    state: present
+    shell: /bin/bash

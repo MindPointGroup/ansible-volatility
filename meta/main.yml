@@ -24,11 +24,9 @@ galaxy_info:
   #  - 10.7
   #  - 10.8
   #  - 10.9
-  #- name: Ubuntu
-  #  versions:
-  #  - all
-  #  - lucid
-  #  - maverick
+  - name: Ubuntu
+    versions:
+    - xenial
   - name: EL
     versions:
   #  - 6
